@@ -1,0 +1,66 @@
+{
+ "cells": {
+  "G_NOT": {
+   "area": 16,
+   "cap": 0.009
+  },
+  "G_AND": {
+   "area": 32,
+   "cap": 0.013
+  },
+  "G_NAND": {
+   "area": 24,
+   "cap": 0.013
+  },
+  "G_OR": {
+   "area": 32,
+   "cap": 0.015
+  },
+  "G_NOR": {
+   "area": 24,
+   "cap": 0.013
+  },
+  "G_ANDN": {
+   "area": 32,
+   "cap": 0.013
+  },
+  "G_ORN": {
+   "area": 32,
+   "cap": 0.015
+  },
+  "G_XOR": {
+   "area": 56,
+   "cap": 0.032
+  },
+  "G_XNOR": {
+   "area": 56,
+   "cap": 0.032
+  },
+  "G_MUX": {
+   "area": 48,
+   "cap": 0.018
+  },
+  "G_DFF": {
+   "area": 96,
+   "cap": 0.009
+  },
+  "G_DFFR": {
+   "area": 112,
+   "cap": 0.009
+  },
+  "G_DFFE": {
+   "area": 128,
+   "cap": 0.012
+  },
+  "G_DFFER": {
+   "area": 144,
+   "cap": 0.012
+  },
+  "GATED_OR": {
+   "area": 112,
+   "cap": 0.009
+  }
+ },
+ "clkcap": 0.028,
+ "gate_clkcap": 0.037
+}
