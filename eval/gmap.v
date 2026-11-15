@@ -26,3 +26,7 @@ module _tm_G_DFFR(input C,D,R, output Q); G_DFFR _TECHMAP_REPLACE_ (.C(C), .D(D)
 module _tm_G_DFFE(input C,D,E, output Q); G_DFFE _TECHMAP_REPLACE_ (.C(C), .D(D), .E(E), .Q(Q)); endmodule
 (* techmap_celltype = "$_DFFE_PN0P_" *)
 module _tm_G_DFFER(input C,D,E,R, output Q); G_DFFER _TECHMAP_REPLACE_ (.C(C), .D(D), .E(E), .R(R), .Q(Q)); endmodule
+(* techmap_celltype = "$_DFFE_PN_" *)
+module _tm_G_DFFEN(input C,D,E, output Q); G_DFFEN _TECHMAP_REPLACE_ (.C(C), .D(D), .E(E), .Q(Q)); endmodule
+(* techmap_celltype = "$_DFFE_PN0N_" *)
+module _tm_G_DFFERN(input C,D,E,R, output Q); G_DFFERN _TECHMAP_REPLACE_ (.C(C), .D(D), .E(E), .R(R), .Q(Q)); endmodule

@@ -13,3 +13,5 @@
 (* blackbox *) module G_DFFR(input C,D,R, output Q); endmodule
 (* blackbox *) module G_DFFE(input C,D,E, output Q); endmodule
 (* blackbox *) module G_DFFER(input C,D,E,R, output Q); endmodule
+(* blackbox *) module G_DFFEN(input C,D,E, output Q); endmodule
+(* blackbox *) module G_DFFERN(input C,D,E,R, output Q); endmodule

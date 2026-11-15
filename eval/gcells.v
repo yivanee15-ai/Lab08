@@ -13,3 +13,5 @@ module G_DFF(input C,D, output reg Q); always @(posedge C) Q <= #0.25 D; endmodu
 module G_DFFR(input C,D,R, output reg Q); always @(posedge C or negedge R) if (!R) Q <= #0.25 1'b0; else Q <= #0.25 D; endmodule
 module G_DFFE(input C,D,E, output reg Q); always @(posedge C) if (E) Q <= #0.25 D; endmodule
 module G_DFFER(input C,D,E,R, output reg Q); always @(posedge C or negedge R) if (!R) Q <= #0.25 1'b0; else if (E) Q <= #0.25 D; endmodule
+module G_DFFEN(input C,D,E, output reg Q); always @(posedge C) if (!E) Q <= #0.25 D; endmodule
+module G_DFFERN(input C,D,E,R, output reg Q); always @(posedge C or negedge R) if (!R) Q <= #0.25 1'b0; else if (!E) Q <= #0.25 D; endmodule
