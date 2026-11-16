@@ -1,13 +1,16 @@
 `timescale 1ns/10ps
 // Lab08 Coupling Network self-made pattern.
-//  - self-contained: with no input.txt in the run directory it generates `PATNUM_DEFAULT random
+//  - self-contained: with no input.txt in the run directory it generates `PATTERN_NUMBER random
 //    patterns (first 12 are corner cases) and checks them with the built-in Verilog golden model
 //  - if input.txt / output.txt (golden/golden.py) exist, they are used instead and the Python
 //    answers are cross-checked against the built-in model
 //  - checks: reset values, out_data==0 while out_valid==0, no in/out valid overlap,
 //            latency <= 200, out_valid high for exactly 32 consecutive cycles, data.
-`ifndef PATNUM_DEFAULT
-  `define PATNUM_DEFAULT 1000
+`ifndef PATTERN_NUMBER
+  `define PATTERN_NUMBER 1000
+`endif
+`ifndef SEED_NUMBER
+  `define SEED_NUMBER 69
 `endif
 `ifndef CYCLE_TIME
   `define CYCLE_TIME 15.0
@@ -90,12 +93,12 @@ endtask
 
 // ---------------- main ----------------
 initial begin
-    seed = 20261115;
+    seed = `SEED_NUMBER;
     fin  = $fopen("input.txt", "r");
     fout = $fopen("output.txt", "r");
     use_file = (fin != 0 && fout != 0);
     if (use_file) rc = $fscanf(fin, "%d", PATNUM);
-    else begin PATNUM = `PATNUM_DEFAULT; $display("input.txt not found: using %0d internally generated patterns", PATNUM); end
+    else begin PATNUM = `PATTERN_NUMBER; $display("input.txt not found: using %0d internally generated patterns", PATNUM); end
 `ifdef PATLIMIT
     if (PATNUM > `PATLIMIT) PATNUM = `PATLIMIT;
 `endif
