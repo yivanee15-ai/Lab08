@@ -163,17 +163,17 @@ initial begin
         // ---- check 32 cycles ----
         for (i = 0; i < 32; i = i + 1) begin
             if (out_valid !== 1'b1) begin
-                $display("SPEC VIOLATION: out_valid must stay high for 32 cycles (pattern %0d, cycle %0d)", i_pat, i); $finish;
+                $display("SPEC VIOLATION: out_valid must stay high for 32 cycles (pattern %0d, cycle %0d) out_valid=%b out_data=%h t=%0t", i_pat, i, out_valid, out_data, $time); $finish;
             end
             if (out_data !== gold_calc[i][11:0]) begin
-                $display("WRONG ANSWER: pattern %0d task %0d out #%0d (%s[%0d][%0d]) golden=%0d yours=%0d",
-                         i_pat, task_num, i, (i < 16) ? "OUT_A" : "OUT_B", (i % 16) / 4, i % 4, gold_calc[i], out_data);
+                $display("WRONG ANSWER: pattern %0d task %0d out #%0d (%s[%0d][%0d]) golden=%0d yours=%0d (%b) t=%0t",
+                         i_pat, task_num, i, (i < 16) ? "OUT_A" : "OUT_B", (i % 16) / 4, i % 4, gold_calc[i], out_data, out_data, $time);
                 $finish;
             end
             @(negedge clk);
         end
         if (out_valid !== 1'b0) begin
-            $display("SPEC VIOLATION: out_valid high for more than 32 cycles (pattern %0d)", i_pat); $finish;
+            $display("SPEC VIOLATION: out_valid high for more than 32 cycles (pattern %0d) t=%0t", i_pat, $time); $finish;
         end
         // ---- 2~5 cycles gap: next in_valid rises 2~5 negedges after out_valid fell ----
         t = 1 + ({$random(seed)} % 4);
