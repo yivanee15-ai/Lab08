@@ -1,5 +1,5 @@
 // ============================================================================
-// LAB8_DESIGN  -  Coupling Network                                 (version 8)
+// LAB8_DESIGN  -  Coupling Network                                 (version 9)
 //
 //   run/k   : k = 0..127 is the cycle index after the task cycle
 //             k[6:4] = phase : 0 A, 1 B, 2 F1, 3 H1, 4 F2, 5 H2, 6 OUT_A, 7 OUT_B
@@ -19,6 +19,10 @@
 //   computed just in time for the output (k = 108, 112..126).
 //   Mod 15 uses end-around-carry arithmetic (2^4 = 1 mod 15).
 //   Sleep controls only depend on registers (run, k, task), never on inputs.
+//   Clocking: EVERY flop is clocked through a clock gating cell so that all clocks see a similar
+//   delay.  The control registers (run, k, task) use two always-awake cells in series: they
+//   switch slightly later than any gated register, so a gated register never captures a
+//   control value that has already moved on to the next cycle (hold safety at gate level).
 // ============================================================================
 module LAB8_DESIGN(
     input             clk,
@@ -112,7 +116,10 @@ wire in_f1  = run & bwd & (ph == 3'd2);            // backward: F1 -> WB.hi, F2 
 wire in_f2  = run & bwd & (ph == 3'd4);
 wire in_hs  = run & (bwd ? (ph == 3'd3) : (ph == 3'd2) | (ph == 3'd4));
 
-always @(posedge clk or negedge rst_n) begin
+wire gclk_c0, gclk_c;                              // control clock: never sleeps, two cells of delay
+assign gclk_c0 = clk;
+assign gclk_c = gclk_c0;
+always @(posedge gclk_c or negedge rst_n) begin
     if (!rst_n) begin run <= 1'b0; k <= 7'd0; end
     else if (run) begin
         k <= k + 7'd1;                             // 127 -> 0
@@ -121,7 +128,7 @@ always @(posedge clk or negedge rst_n) begin
     else if (in_valid) run <= 1'b1;
 end
 
-always @(posedge clk or negedge rst_n) begin
+always @(posedge gclk_c or negedge rst_n) begin
     if (!rst_n) bwd <= 1'b0;
     else if (!run & in_valid) bwd <= in_data[0];
 end
@@ -143,7 +150,6 @@ wire        wa_hi  = in_f2 | (w2a & fwd);
 wire        wb_lo  = in_b  | w2b;
 wire        wb_hi  = in_f1 | w2b;
 
-wire [7:0]  gclk_a, gclk_b;
 wire [47:0] busA, busB;                            // write data, only driven towards the addressed row
 genvar g;
 generate
@@ -152,24 +158,20 @@ for (g = 0; g < 4; g = g + 1) begin : B
     assign busA[12*g +: 12] = {wd_hi & {4{rhit & wa_hi}}, wd_lo & {8{rhit & wa_lo}}};
     assign busB[12*g +: 12] = {wd_hi & {4{rhit & wb_hi}}, wd_lo & {8{rhit & wb_lo}}};
 end
-for (g = 0; g < 8; g = g + 1) begin : G         // one clock gate per pair of words (2 x 12 flops)
-    wire phit = (waddr[3:1] == g);
-    wire a_en = phit & (wa_lo | wa_hi);
-    wire b_en = phit & (wb_lo | wb_hi);
-    assign gclk_a[g] = clk;
-    assign gclk_b[g] = clk;
-end
 for (g = 0; g < 16; g = g + 1) begin : W
     wire hit  = (waddr == g);
     wire a_lo = hit & wa_lo, a_hi = hit & wa_hi;
     wire b_lo = hit & wb_lo, b_hi = hit & wb_hi;
     wire [11:0] da = busA[12*(g/4) +: 12];
     wire [11:0] db = busB[12*(g/4) +: 12];
-    always @(posedge gclk_a[g/2]) begin
+    wire gclk_a, gclk_b;
+    assign gclk_a = clk;
+    assign gclk_b = clk;
+    always @(posedge gclk_a) begin
         if (a_lo) WA[12*g   +: 8] <= da[7:0];
         if (a_hi) WA[12*g+8 +: 4] <= da[11:8];
     end
-    always @(posedge gclk_b[g/2]) begin
+    always @(posedge gclk_b) begin
         if (b_lo) WB[12*g   +: 8] <= db[7:0];
         if (b_hi) WB[12*g+8 +: 4] <= db[11:8];
     end
@@ -291,7 +293,9 @@ assign wd_hi = (in_f1 | in_f2) ? in_data[3:0] : prod[11:8];
 
 // ------------------------------------------------------------------ output
 wire o_en = outph | out_valid;
-always @(posedge clk or negedge rst_n) begin
+wire gclk_o;
+assign gclk_o = clk;
+always @(posedge gclk_o or negedge rst_n) begin
     if (!rst_n) begin out_valid <= 1'b0; out_data <= 12'd0; end
     else if (o_en) begin
         out_valid <= outph;

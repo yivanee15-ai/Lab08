@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Derive LAB8_DESIGN_wocg.v from the clock-gated source: only the clock gating part changes.
-   - every GATED_OR instance   ->  assign <gated clock> = clk;
-   - the cg_en port is removed
+   - every GATED_OR instance   ->  assign <gated clock> = <its input clock>;
+   - the GATED_OR include and the cg_en port are removed
 """
 import re, sys
 src = open(sys.argv[1]).read()
-pat = re.compile(r"GATED_OR\s+\w+\s*\(\s*\.CLOCK\(clk\)\s*,\s*\.SLEEP_CTRL\(.*\)\s*,\s*\.RST_N\(rst_n\)\s*,\s*\.CLOCK_GATED\(([\w\[\]]+)\)\s*\);")
-out, n = pat.subn(lambda m: f"assign {m.group(1)} = clk;", src)
+pat = re.compile(r"GATED_OR\s+\w+\s*\(\s*\.CLOCK\((\w+)\)\s*,\s*\.SLEEP_CTRL\(.*\)\s*,\s*\.RST_N\(rst_n\)\s*,\s*\.CLOCK_GATED\(([\w\[\]]+)\)\s*\);")
+out, n = pat.subn(lambda m: f"assign {m.group(2)} = {m.group(1)};", src)
 out = out.replace('`include "GATED_OR.v"\n', "")
 out, m = re.subn(r"^\s*input\s+cg_en,\n", "", out, flags=re.M)
 assert n > 0 and m == 1 and "GATED_OR" not in out and "cg_en" not in out, (n, m)
