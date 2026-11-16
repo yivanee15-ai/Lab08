@@ -1,9 +1,14 @@
 `timescale 1ns/10ps
 // Lab08 Coupling Network self-made pattern.
-//  - reads input.txt / output.txt produced by golden/golden.py
-//  - ALSO recomputes the answer with an independent Verilog model and cross-checks the file
+//  - self-contained: with no input.txt in the run directory it generates `PATNUM_DEFAULT random
+//    patterns (first 12 are corner cases) and checks them with the built-in Verilog golden model
+//  - if input.txt / output.txt (golden/golden.py) exist, they are used instead and the Python
+//    answers are cross-checked against the built-in model
 //  - checks: reset values, out_data==0 while out_valid==0, no in/out valid overlap,
 //            latency <= 200, out_valid high for exactly 32 consecutive cycles, data.
+`ifndef PATNUM_DEFAULT
+  `define PATNUM_DEFAULT 1000
+`endif
 `ifndef CYCLE_TIME
   `define CYCLE_TIME 15.0
 `endif
@@ -16,6 +21,7 @@ module PATTERN(
     input      [11:0] out_data
 );
 real CYCLE = `CYCLE_TIME;
+integer use_file, kind;
 integer PATNUM, fin, fout, rc, i_pat, i, j, k, t, lat, total_lat, max_lat, seed;
 integer inbuf [0:96];
 integer gold_file [0:31];
@@ -87,8 +93,9 @@ initial begin
     seed = 20261115;
     fin  = $fopen("input.txt", "r");
     fout = $fopen("output.txt", "r");
-    if (fin == 0 || fout == 0) begin $display("cannot open input.txt/output.txt"); $finish; end
-    rc = $fscanf(fin, "%d", PATNUM);
+    use_file = (fin != 0 && fout != 0);
+    if (use_file) rc = $fscanf(fin, "%d", PATNUM);
+    else begin PATNUM = `PATNUM_DEFAULT; $display("input.txt not found: using %0d internally generated patterns", PATNUM); end
 `ifdef PATLIMIT
     if (PATNUM > `PATLIMIT) PATNUM = `PATLIMIT;
 `endif
@@ -105,8 +112,23 @@ initial begin
     repeat (3) @(negedge clk);
 
     for (i_pat = 0; i_pat < PATNUM; i_pat = i_pat + 1) begin
-        for (i = 0; i < 97; i = i + 1) rc = $fscanf(fin, "%d", inbuf[i]);
-        for (i = 0; i < 32; i = i + 1) rc = $fscanf(fout, "%d", gold_file[i]);
+        if (use_file) begin
+            for (i = 0; i < 97; i = i + 1) rc = $fscanf(fin, "%d", inbuf[i]);
+            for (i = 0; i < 32; i = i + 1) rc = $fscanf(fout, "%d", gold_file[i]);
+        end else begin
+            // corner cases first (both tasks): 0 all zero, 1 all max, 2 F = 0, 3 H = 0, 4 A max / B zero, 5 A zero / B max
+            kind = (i_pat < 12) ? i_pat / 2 : 99;
+            inbuf[0] = (i_pat < 12) ? i_pat % 2 : {$random(seed)} % 2;
+            for (i = 1; i < 97; i = i + 1) begin
+                inbuf[i] = (i < 33) ? {$random(seed)} % 256 : {$random(seed)} % 16;
+                if (kind == 0) inbuf[i] = 0;
+                if (kind == 1) inbuf[i] = (i < 33) ? 255 : 15;
+                if (kind == 2 && ((i >= 33 && i < 49) || (i >= 65 && i < 81))) inbuf[i] = 0;
+                if (kind == 3 && ((i >= 49 && i < 65) || i >= 81)) inbuf[i] = 0;
+                if (kind == 4 && i < 33) inbuf[i] = (i < 17) ? 255 : 0;
+                if (kind == 5 && i < 33) inbuf[i] = (i < 17) ? 0 : 255;
+            end
+        end
         task_num = inbuf[0];
         for (i = 0; i < 16; i = i + 1) begin
             A[i]  = inbuf[1 + i];  B[i]  = inbuf[17 + i]; F1[i] = inbuf[33 + i];
@@ -114,7 +136,7 @@ initial begin
         end
         calc_gold;
         for (i = 0; i < 32; i = i + 1)
-            if (gold_calc[i] !== gold_file[i]) begin
+            if (use_file && gold_calc[i] !== gold_file[i]) begin
                 $display("GOLDEN MISMATCH (python vs verilog) pattern %0d idx %0d: %0d vs %0d", i_pat, i, gold_file[i], gold_calc[i]);
                 $finish;
             end
