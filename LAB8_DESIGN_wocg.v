@@ -121,9 +121,7 @@ always @(posedge clk or negedge rst_n) begin
     else if (in_valid) run <= 1'b1;
 end
 
-wire gclk_task;
-assign gclk_task = clk;
-always @(posedge gclk_task or negedge rst_n) begin
+always @(posedge clk or negedge rst_n) begin
     if (!rst_n) bwd <= 1'b0;
     else if (!run & in_valid) bwd <= in_data[0];
 end
@@ -293,9 +291,7 @@ assign wd_hi = (in_f1 | in_f2) ? in_data[3:0] : prod[11:8];
 
 // ------------------------------------------------------------------ output
 wire o_en = outph | out_valid;
-wire gclk_o;
-assign gclk_o = clk;
-always @(posedge gclk_o or negedge rst_n) begin
+always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin out_valid <= 1'b0; out_data <= 12'd0; end
     else if (o_en) begin
         out_valid <= outph;
