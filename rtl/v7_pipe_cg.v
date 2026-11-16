@@ -20,9 +20,7 @@
 //   Mod 15 uses end-around-carry arithmetic (2^4 = 1 mod 15).
 //   Sleep controls only depend on registers (run, k, task), never on inputs.
 // ============================================================================
-`ifdef RTL
 `include "GATED_OR.v"
-`endif
 module LAB8_DESIGN(
     input             clk,
     input             rst_n,
